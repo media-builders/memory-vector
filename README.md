@@ -13,16 +13,7 @@ The plugin registers four OpenClaw tools:
 
 ## What It Ingests
 
-The plugin can ingest either a broad OpenClaw-style memory root or exact files/folders.
-
-Root-style layout:
-
-```text
-<WORKSPACE_ROOT>/<MEMORY_ROOT>/<AGENT_OR_WORKSPACE>/MEMORY.md
-<WORKSPACE_ROOT>/<MEMORY_ROOT>/<AGENT_OR_WORKSPACE>/memory/*.md
-```
-
-Exact path layout:
+The portable install path is `memoryPaths`: exact memory files or folders chosen during installation.
 
 ```json
 {
@@ -33,7 +24,7 @@ Exact path layout:
 }
 ```
 
-`memoryPaths` is recommended for portable installs because users may not have a shared broad memory root.
+When a folder is listed in `memoryPaths`, markdown files under that folder are ingested. When a single `.md` file is listed, only that file is ingested.
 
 ## Documentation
 
@@ -52,7 +43,6 @@ Add the plugin to `~/.openclaw/openclaw.json`:
         "enabled": true,
         "config": {
           "workspaceRoot": "<WORKSPACE_ROOT>",
-          "memoryRoot": ".",
           "memoryPaths": [
             "<MEMORY_PATH>"
           ],
