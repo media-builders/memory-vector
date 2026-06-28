@@ -1,0 +1,71 @@
+{
+  "id": "memory-vector",
+  "name": "Memory Vector",
+  "description": "Semantic memory search over LanceDB vector index for company agents. Wraps the brain/scripts Python pipeline into discoverable agent tools.",
+  "contracts": {
+    "tools": [
+      "memory_vector_search",
+      "memory_vector_ingest",
+      "memory_vector_watch",
+      "memory_vector_status"
+    ]
+  },
+  "activation": {
+    "onStartup": true
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "workspaceRoot": {
+        "type": "string",
+        "description": "Absolute path to the OpenClaw workspace root. Defaults to ~/.openclaw/workspace."
+      },
+      "memoryRoot": {
+        "type": "string",
+        "description": "Path to the folder containing agent workspaces, relative to workspaceRoot or absolute. Defaults to company."
+      },
+      "memoryPaths": {
+        "type": "array",
+        "description": "Exact memory files or folders to ingest. Relative paths resolve under workspaceRoot. When set, these paths take precedence over memoryRoot scanning.",
+        "items": {
+          "type": "string"
+        }
+      },
+      "indexPath": {
+        "type": "string",
+        "description": "Path to LanceDB index relative to workspaceRoot. Defaults to plugins/memory-vector/vector."
+      },
+      "embeddingModel": {
+        "type": "string",
+        "description": "Sentence-transformers model name. Defaults to all-MiniLM-L6-v2."
+      },
+      "maxSearchResults": {
+        "type": "number",
+        "description": "Default maximum results per search. Defaults to 20."
+      },
+      "pythonPath": {
+        "type": "string",
+        "description": "Python binary to use for subprocess calls. Defaults to python3."
+      },
+      "venvPath": {
+        "type": "string",
+        "description": "Path to Python virtualenv. Defaults to scripts/.venv relative to plugin directory."
+      },
+      "watchEnabled": {
+        "type": "boolean",
+        "description": "Start file watcher on plugin activation. Defaults to false."
+      },
+      "watchDebounceSeconds": {
+        "type": "number",
+        "description": "Debounce window in seconds before ingest runs after file change. Defaults to 2."
+      }
+    }
+  },
+  "extensions": [
+    "./src/index.js"
+  ],
+  "runtimeExtensions": [
+    "./src/index.js"
+  ]
+}

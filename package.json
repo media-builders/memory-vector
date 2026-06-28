@@ -1,0 +1,37 @@
+{
+  "name": "@mediabuilders/openclaw-memory-vector",
+  "version": "0.1.0",
+  "type": "module",
+  "openclaw": {
+    "extensions": [
+      "./src/index.js"
+    ],
+    "runtimeExtensions": [
+      "./src/index.js"
+    ],
+    "compat": {
+      "pluginApi": ">=2026.3.24-beta.2",
+      "minGatewayVersion": "2026.3.24-beta.2"
+    },
+    "build": {
+      "openclawVersion": "2026.3.24-beta.2",
+      "pluginSdkVersion": "2026.3.24-beta.2"
+    }
+  },
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node --test tests/",
+    "verify": "node --check src/index.js && node --check src/python-bridge.js && echo 'plugin json ok'"
+  },
+  "keywords": [
+    "openclaw",
+    "plugin",
+    "memory",
+    "vector",
+    "embeddings",
+    "lancedb"
+  ],
+  "author": "engineering-head",
+  "license": "ISC",
+  "description": "OpenClaw plugin for semantic memory search over LanceDB vector index."
+}
