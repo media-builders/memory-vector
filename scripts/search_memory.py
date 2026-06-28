@@ -3,7 +3,7 @@
 Memory vector search script invoked by the memory-vector plugin.
 Queries the LanceDB index with a natural language query and returns ranked results as JSON.
 
-Usage: python search_memory.py <query> <workspace_root> <index_path> [max_results] [agent_filter] [type_filter]
+Usage: python search_memory.py <query> <workspace_root> <index_path> [max_results] [agent_filter] [type_filter] [source_filter]
 """
 from __future__ import annotations
 
@@ -17,6 +17,44 @@ try:
 except ImportError as e:
     print(json.dumps({"error": f"Missing Python dependency: {e}. Run pip install sentence-transformers lancedb pyarrow in the plugin venv."}))
     sys.exit(1)
+
+
+def row_matches_source_filter(row: dict, source_filter: str | None) -> bool:
+    if not source_filter:
+        return True
+
+    needle = source_filter.strip().lower()
+    if not needle:
+        return True
+
+    fields = (
+        "source_file_path",
+        "file_path",
+        "date",
+        "timestamp",
+        "authored_at",
+        "committed_at",
+        "commit_sha",
+        "title",
+    )
+    for field in fields:
+        value = row.get(field)
+        if value is not None and needle in str(value).lower():
+            return True
+    return False
+
+
+def normalized_type(row: dict) -> str:
+    file_type = row.get("file_type", "") or ""
+    source_type = row.get("source_type", "") or ""
+
+    if file_type == "git_commit" or source_type == "git_commit":
+        return "git"
+    if file_type == "daily":
+        return "daily"
+    if file_type in ("durable", "memory") or source_type == "workspace_markdown":
+        return "memory"
+    return source_type or file_type
 
 
 def search(query: str, workspace_root: str, index_path: str, max_results: int = 20, agent_filter: str | None = None, type_filter: str = "all", source_filter: str | None = None) -> dict:
@@ -41,10 +79,10 @@ def search(query: str, workspace_root: str, index_path: str, max_results: int = 
     # If query is empty/placeholder and sourceFilter is set, bypass semantic search
     if (not query or query.strip() in ("*", ".", "all")) and source_filter:
         try:
-            # Read all rows from LanceDB and filter by source
+            # Read all rows from LanceDB and filter by date/source metadata.
             arrow_table = table.to_arrow()
             all_rows = arrow_table.to_pylist()
-            results = [r for r in all_rows if source_filter in (r.get("source_file_path", "") or "")]
+            results = [r for r in all_rows if row_matches_source_filter(r, source_filter)]
         except Exception as e:
             return {"error": "SEARCH_FAILED", "message": str(e)}
     else:
@@ -65,7 +103,11 @@ def search(query: str, workspace_root: str, index_path: str, max_results: int = 
             "chunk_id": row.get("chunk_id", ""),
             "source": row.get("source_file_path", row.get("file_path", "")),
             "agent": row.get("agent_id", ""),
-            "type": row.get("source_type", row.get("file_type", "")),
+            "type": normalized_type(row),
+            "rawType": row.get("source_type", row.get("file_type", "")),
+            "date": row.get("date", ""),
+            "timestamp": row.get("timestamp", ""),
+            "commit": row.get("commit_sha", ""),
             "title": row.get("title", ""),
             "snippet": row.get("text", "") or "",
         }
@@ -78,10 +120,16 @@ def search(query: str, workspace_root: str, index_path: str, max_results: int = 
         hit["score"] = round(row.get("_distance", 0), 4)
         hits.append(hit)
 
-    # Apply source filter (exact partial match on source path)
+    # Apply source filter as a date/source metadata filter.
     # When filtering, we searched with a wider limit; now trim to requested max
     if source_filter:
-        hits = [h for h in hits if source_filter in (h.get("source", "") or "")]
+        hits = [h for h in hits if row_matches_source_filter({
+            "source_file_path": h.get("source", ""),
+            "date": h.get("date", ""),
+            "timestamp": h.get("timestamp", ""),
+            "commit_sha": h.get("commit", ""),
+            "title": h.get("title", ""),
+        }, source_filter)]
         hits = hits[:max_results]
 
     # Get total count

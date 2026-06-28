@@ -36,7 +36,7 @@ export default definePluginEntry({
           maxResults: { type: "number", description: "Max results, default 20, max 50" },
           agentFilter: { type: "string", description: "Limit to specific agent workspace" },
           type: { type: "string", enum: ["memory", "daily", "git", "all"], description: "Content type filter" },
-          sourceFilter: { type: "string", description: "Exact partial match on source file path (e.g. 2026-05-15)" },
+          sourceFilter: { type: "string", description: "Partial match on source path, date, timestamp, commit SHA, or title (e.g. 2026-05-15)" },
         },
         required: [],
       },
@@ -68,8 +68,13 @@ export default definePluginEntry({
             `Found ${result.totalHits} results (showing ${result.results?.length || 0})`,
             "",
             ...(result.results || []).map(
-              (r, i) =>
-                `${i + 1}. [${r.agent || "unknown"}] ${r.type || "memory"} | score: ${r.score}\n   Source: ${r.source}\n   ${r.snippet || ""}`
+              (r, i) => {
+                const meta = [
+                  r.date ? `date: ${r.date}` : null,
+                  r.commit ? `commit: ${String(r.commit).slice(0, 12)}` : null,
+                ].filter(Boolean).join(" | ");
+                return `${i + 1}. [${r.agent || "unknown"}] ${r.type || "memory"} | score: ${r.score}${meta ? ` | ${meta}` : ""}\n   Source: ${r.source}\n   ${r.snippet || ""}`;
+              }
             ),
           ];
 

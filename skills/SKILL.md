@@ -57,7 +57,7 @@ Use this when the user asks what happened on a specific date:
 memory_vector_search sourceFilter="YYYY-MM-DD"
 ```
 
-Set `maxResults` higher for busy days, such as `50` to `100`. Leave `query` empty to get all chunks from that date. Add `agentFilter` only when the retrieved metadata uses agent names and the user wants one role, project, or workspace.
+Set `maxResults` higher for busy days, such as `50` to `100`. Leave `query` empty to get all chunks from that date. Date-scoped retrieval matches both dated memory files and git commits whose indexed `date` or timestamp matches the filter. Add `agentFilter` only when the retrieved metadata uses agent names and the user wants one role, project, or workspace.
 
 ### Semantic Search
 
@@ -103,7 +103,7 @@ Action:
 
 - Resolve relative dates to an exact `YYYY-MM-DD` date.
 - Run `memory_vector_search` with `sourceFilter` set to that date.
-- Use an empty or missing query to get all indexed content from that date.
+- Use an empty or missing query to get all indexed memory notes and git commits from that date.
 - Set `maxResults` appropriately, such as `50` for busy days or `20` for quiet days.
 - Summarize the retrieved results into the standard report format.
 - If the user asks you to save the report, write it to a user-approved path or a configured report/journal folder if one is documented for that workspace.
