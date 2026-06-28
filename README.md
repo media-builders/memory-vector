@@ -15,11 +15,11 @@ The plugin registers four OpenClaw tools:
 
 The plugin can ingest either a broad OpenClaw-style memory root or exact files/folders.
 
-Default root-style layout:
+Root-style layout:
 
 ```text
-<WORKSPACE_ROOT>/company/<agent>/MEMORY.md
-<WORKSPACE_ROOT>/company/<agent>/memory/*.md
+<WORKSPACE_ROOT>/<MEMORY_ROOT>/<AGENT_OR_WORKSPACE>/MEMORY.md
+<WORKSPACE_ROOT>/<MEMORY_ROOT>/<AGENT_OR_WORKSPACE>/memory/*.md
 ```
 
 Exact path layout:
@@ -27,13 +27,13 @@ Exact path layout:
 ```json
 {
   "memoryPaths": [
-    "<WORKSPACE_ROOT>/company/engineering-head/memory",
-    "<WORKSPACE_ROOT>/company/engineering-head/MEMORY.md"
+    "<WORKSPACE_ROOT>/agents/<AGENT_OR_WORKSPACE>/memory",
+    "<WORKSPACE_ROOT>/agents/<AGENT_OR_WORKSPACE>/MEMORY.md"
   ]
 }
 ```
 
-`memoryPaths` is recommended for portable installs because users may not have a full `company` tree.
+`memoryPaths` is recommended for portable installs because users may not have a shared broad memory root.
 
 ## Documentation
 
@@ -52,8 +52,10 @@ Add the plugin to `~/.openclaw/openclaw.json`:
         "enabled": true,
         "config": {
           "workspaceRoot": "<WORKSPACE_ROOT>",
-          "memoryRoot": "company",
-          "memoryPaths": [],
+          "memoryRoot": ".",
+          "memoryPaths": [
+            "<MEMORY_PATH>"
+          ],
           "indexPath": "plugins/memory-vector/vector",
           "embeddingModel": "all-MiniLM-L6-v2",
           "maxSearchResults": 20,

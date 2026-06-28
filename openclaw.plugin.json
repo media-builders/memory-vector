@@ -1,7 +1,7 @@
 {
   "id": "memory-vector",
   "name": "Memory Vector",
-  "description": "Semantic memory search over LanceDB vector index for company agents. Wraps the brain/scripts Python pipeline into discoverable agent tools.",
+  "description": "Semantic memory search over a local LanceDB vector index. Wraps the Python indexing pipeline into discoverable OpenClaw tools.",
   "contracts": {
     "tools": [
       "memory_vector_search",
@@ -23,7 +23,7 @@
       },
       "memoryRoot": {
         "type": "string",
-        "description": "Path to the folder containing agent workspaces, relative to workspaceRoot or absolute. Defaults to company."
+        "description": "Path to a broad memory root, relative to workspaceRoot or absolute. Defaults to the workspace root. Prefer memoryPaths for exact folders/files."
       },
       "memoryPaths": {
         "type": "array",

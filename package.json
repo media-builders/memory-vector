@@ -31,7 +31,7 @@
     "embeddings",
     "lancedb"
   ],
-  "author": "engineering-head",
+  "author": "Media Builders",
   "license": "ISC",
   "description": "OpenClaw plugin for semantic memory search over LanceDB vector index."
 }

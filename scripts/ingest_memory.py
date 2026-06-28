@@ -27,7 +27,7 @@ OUT_DIR = resolve_path(WORKSPACE_ROOT, _index_path or "plugins/memory-vector/vec
 _memory_root = os.environ.get("MEMORY_ROOT")
 if not _memory_root and len(_plugin_sys.argv) > 3:
     _memory_root = _plugin_sys.argv[3]
-BASE = resolve_path(WORKSPACE_ROOT, _memory_root or "company")
+BASE = resolve_path(WORKSPACE_ROOT, _memory_root or ".")
 
 _memory_paths_raw = os.environ.get("MEMORY_PATHS")
 if not _memory_paths_raw and len(_plugin_sys.argv) > 4:
@@ -50,68 +50,18 @@ MANIFEST = OUT_DIR / 'manifest.json'
 INDEX = OUT_DIR / 'index.json'
 
 HEADING_RE = re.compile(r'^(#{1,6})\s+(.*)$')
-COMPANY_PATH_RE = re.compile(r'(?:^|[/\\])company[/\\]([a-z0-9-]+)(?=$|[/\\])')
-AGENT_ID_RE = re.compile(r'"agent_id"\s*:\s*"([a-z0-9-]+)"')
-LIVE_AGENTS = frozenset(
+DISCOVERED_AGENT_DIRS = frozenset(
     d.name for d in (BASE.iterdir() if BASE.exists() else [])
-    if d.is_dir() and d.name != 'brain' and (d / 'AGENTS.md').exists()
+    if d.is_dir() and (d / 'AGENTS.md').exists()
 )
-NON_AGENT_COMPANY_DIRS = frozenset({'brain', 'headquarters', 'knowledge', 'projects'})
-KNOWN_COMPANY_DIRS = LIVE_AGENTS | NON_AGENT_COMPANY_DIRS
-ALLOWED_METADATA_AGENT_IDS = LIVE_AGENTS | {'workspace', 'main', 'brain'}
-REMOVED_AGENT_TOKENS = frozenset({
-    'chief-of-staff',
-    'engineering-dev-backend',
-    'engineering-dev-frontend',
-    'engineering-manager',
-    'marketing-analyst',
-    'marketing-campaign-specialist',
-    'marketing-content-creator',
-    'marketing-growth-specialist',
-    'marketing-manager',
-    'operations-head',
-    'product-manager',
-    'sales-manager',
-})
-
-
-def contains_removed_agent_reference(value):
-    text = value if isinstance(value, str) else json.dumps(value, sort_keys=True)
-    text = text.lower()
-
-    if any(token in text for token in REMOVED_AGENT_TOKENS):
-        return True
-
-    if LIVE_AGENTS:
-        for name in COMPANY_PATH_RE.findall(text):
-            if name not in KNOWN_COMPANY_DIRS:
-                return True
-
-        for name in AGENT_ID_RE.findall(text):
-            if name not in ALLOWED_METADATA_AGENT_IDS:
-                return True
-
-    return False
 
 
 def dept_for(agent):
-    if agent in {'ceo', 'brain'}:
-        return 'executive'
-    if agent.startswith('design-'):
-        return 'design'
-    if agent.startswith('engineering-'):
-        return 'engineering'
-    if agent.startswith('product-'):
-        return 'product'
-    if agent.startswith('operations-'):
-        return 'operations'
-    if agent.startswith('marketing-'):
-        return 'marketing'
-    if agent.startswith('sales-'):
-        return 'sales'
-    if agent.startswith('finance-'):
-        return 'finance'
-    return 'other'
+    if not agent or agent == 'workspace':
+        return 'workspace'
+    if '-' in agent:
+        return agent.split('-', 1)[0]
+    return 'general'
 
 
 def discover_memory_files():
@@ -121,8 +71,6 @@ def discover_memory_files():
     files = []
     for d in sorted(BASE.iterdir()):
         if not d.is_dir() or not (d / 'AGENTS.md').exists():
-            continue
-        if d.name == 'brain':
             continue
         mem = d / 'MEMORY.md'
         if mem.exists():
@@ -173,13 +121,6 @@ def discover_configured_memory_files():
 
 
 def infer_agent_id(path: Path):
-    try:
-        rel = path.relative_to(BASE)
-        if rel.parts:
-            return rel.parts[0]
-    except ValueError:
-        pass
-
     current = path if path.is_dir() else path.parent
     for parent in [current, *current.parents]:
         if (parent / 'AGENTS.md').exists():
@@ -189,6 +130,14 @@ def infer_agent_id(path: Path):
         return path.parent.parent.name
     if path.name == 'MEMORY.md' and path.parent.name:
         return path.parent.name
+
+    try:
+        rel = path.relative_to(BASE)
+        if rel.parts:
+            return rel.parts[0]
+    except ValueError:
+        pass
+
     return 'workspace'
 
 
@@ -197,7 +146,7 @@ def infer_workspace_path(path: Path, agent: str):
     for parent in [current, *current.parents]:
         if (parent / 'AGENTS.md').exists():
             return str(parent)
-    if agent in LIVE_AGENTS and BASE.exists():
+    if agent in DISCOVERED_AGENT_DIRS and BASE.exists():
         return str(BASE / agent)
     if path.parent.name == 'memory':
         return str(path.parent.parent)
@@ -309,6 +258,10 @@ def run_git(repo: Path, *args: str) -> str:
 
 
 def repo_agent_id(repo: Path) -> str:
+    inferred = infer_agent_id(repo)
+    if inferred != 'workspace':
+        return inferred
+
     try:
         rel = repo.relative_to(BASE)
         return rel.parts[0] if rel.parts else 'workspace'
@@ -421,7 +374,7 @@ def collect_git_commit_records():
                 'chunk_id': chunk_id,
                 'agent_id': agent_id,
                 'department': department,
-                'workspace_path': str(BASE / agent_id) if agent_id in LIVE_AGENTS else str(repo),
+                'workspace_path': str(BASE / agent_id) if agent_id in DISCOVERED_AGENT_DIRS else str(repo),
                 'file_path': f"{repo}/.git:{commit_sha}",
                 'source_file_path': f"{repo}/.git",
                 'file_type': 'git_commit',
@@ -443,8 +396,7 @@ def collect_git_commit_records():
                 'insertions': stats['insertions'],
                 'deletions': stats['deletions'],
             }
-            if not contains_removed_agent_reference(rec):
-                records.append(rec)
+            records.append(rec)
     return records, repo_index
 
 
@@ -486,8 +438,7 @@ def main():
                 'text_length': len(chunk['text']),
                 'source_type': 'workspace_markdown',
             }
-            if not contains_removed_agent_reference(rec):
-                chunk_records.append(rec)
+            chunk_records.append(rec)
 
     git_records, git_index = collect_git_commit_records()
     chunk_records.extend(git_records)

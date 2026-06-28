@@ -10,7 +10,7 @@ This guide uses placeholders so it can be shared across machines:
 - `<WORKSPACE_ROOT>`: the OpenClaw workspace root, usually `<OPENCLAW_HOME>/workspace`
 - `<PLUGIN_DIR>`: the installed plugin directory, usually `<WORKSPACE_ROOT>/plugins/memory-vector`
 - `<SOURCE_DIR>`: an optional source checkout, if different from the installed plugin directory
-- `<MEMORY_ROOT>`: the folder containing agent workspaces, usually `company` relative to `<WORKSPACE_ROOT>`
+- `<MEMORY_ROOT>`: a broad folder containing memory workspaces, relative to `<WORKSPACE_ROOT>` or absolute
 - `<MEMORY_PATH>`: an exact memory file or folder to ingest
 
 When editing `openclaw.json`, replace placeholders with real absolute paths for that machine. For most local installs, `<OPENCLAW_HOME>` is the user's home-directory `.openclaw` folder and `<WORKSPACE_ROOT>` is its `workspace` subdirectory.
@@ -21,7 +21,7 @@ The plugin is a native OpenClaw plugin. Its manifest is `openclaw.plugin.json`, 
 
 It declares and registers these agent tools:
 
-- `memory_vector_search`: semantic search over indexed company memory
+- `memory_vector_search`: semantic search over indexed memory
 - `memory_vector_ingest`: scan memory files and rebuild or refresh the vector index
 - `memory_vector_watch`: start or stop the background file watcher
 - `memory_vector_status`: report the current index path and health
@@ -32,19 +32,19 @@ The tools are declared in `openclaw.plugin.json` under `contracts.tools` and are
 
 Yes, the plugin ingests memory files. `memory_vector_ingest` scans the configured memory root and creates chunk records before generating embeddings.
 
-By default, the source memory root is:
+By default, the broad source memory root is the workspace root:
 
 ```text
-<WORKSPACE_ROOT>/company
+<WORKSPACE_ROOT>
 ```
 
 Within that root, the plugin ingests:
 
-- `<MEMORY_ROOT>/<agent>/MEMORY.md`
-- `<MEMORY_ROOT>/<agent>/memory/*.md`
+- `<MEMORY_ROOT>/<AGENT_OR_WORKSPACE>/MEMORY.md`
+- `<MEMORY_ROOT>/<AGENT_OR_WORKSPACE>/memory/*.md`
 - Git commit history from repositories found under `<MEMORY_ROOT>`
 
-An agent folder is considered ingestible when it is a directory under `<MEMORY_ROOT>` and contains `AGENTS.md`. The default ingest skips the `brain` agent for markdown memory files. The watcher also ignores `brain`, `headquarters`, and `knowledge`.
+A workspace folder is considered ingestible when it is a directory under `<MEMORY_ROOT>` and contains `AGENTS.md`.
 
 If a user does not have a broader memory root, set `memoryPaths` instead. When `memoryPaths` is set, the plugin ingests those exact files or folders instead of scanning `memoryRoot`.
 
@@ -53,7 +53,7 @@ Examples:
 ```json
 {
   "memoryPaths": [
-    "<WORKSPACE_ROOT>/company/engineering-head/memory"
+    "<WORKSPACE_ROOT>/agents/<AGENT_OR_WORKSPACE>/memory"
   ]
 }
 ```
@@ -61,8 +61,8 @@ Examples:
 ```json
 {
   "memoryPaths": [
-    "<WORKSPACE_ROOT>/company/engineering-head/MEMORY.md",
-    "<WORKSPACE_ROOT>/company/engineering-head/memory"
+    "<WORKSPACE_ROOT>/agents/<AGENT_OR_WORKSPACE>/MEMORY.md",
+    "<WORKSPACE_ROOT>/agents/<AGENT_OR_WORKSPACE>/memory"
   ]
 }
 ```
@@ -72,7 +72,7 @@ For JSON on Windows, either use forward slashes or escape backslashes:
 ```json
 {
   "memoryPaths": [
-    "C:/Users/<USER>/.openclaw/workspace/company/engineering-head/memory"
+    "C:/Users/<USER>/.openclaw/workspace/agents/<AGENT_OR_WORKSPACE>/memory"
   ]
 }
 ```
@@ -143,8 +143,10 @@ Use this shape in `~/.openclaw/openclaw.json`:
         "enabled": true,
         "config": {
           "workspaceRoot": "<WORKSPACE_ROOT>",
-          "memoryRoot": "company",
-          "memoryPaths": [],
+          "memoryRoot": ".",
+          "memoryPaths": [
+            "<MEMORY_PATH>"
+          ],
           "indexPath": "plugins/memory-vector/vector",
           "embeddingModel": "all-MiniLM-L6-v2",
           "maxSearchResults": 20,
@@ -176,8 +178,8 @@ If your existing `plugins.load.paths` already contains other local plugin paths,
 
 | Field | Required | Recommended value | Purpose |
 |---|---:|---|---|
-| `workspaceRoot` | Yes | `<WORKSPACE_ROOT>` | Root workspace scanned for company memory. |
-| `memoryRoot` | No | `company` | Folder containing agent workspaces. Relative values resolve under `workspaceRoot`; absolute values are allowed. |
+| `workspaceRoot` | Yes | `<WORKSPACE_ROOT>` | Root path used to resolve relative plugin paths. |
+| `memoryRoot` | No | `.` | Broad folder containing memory workspaces. Relative values resolve under `workspaceRoot`; absolute values are allowed. Prefer `memoryPaths` for exact public installs. |
 | `memoryPaths` | No | `[]` | Exact memory files or folders to ingest. When set, this takes precedence over `memoryRoot`. |
 | `indexPath` | Yes | `plugins/memory-vector/vector` | Vector index path relative to `workspaceRoot`. |
 | `embeddingModel` | No | `all-MiniLM-L6-v2` | Sentence Transformers model used for embeddings. |
@@ -225,13 +227,15 @@ There are five folder path settings that matter:
 - `memoryPaths`: exact memory files or folders to ingest
 - `indexPath`: where generated vector data is written and searched
 
-For a normal OpenClaw workspace, use:
+For exact memory paths, use:
 
 ```json
 {
   "workspaceRoot": "<WORKSPACE_ROOT>",
-  "memoryRoot": "company",
-  "memoryPaths": [],
+  "memoryRoot": ".",
+  "memoryPaths": [
+    "<MEMORY_PATH>"
+  ],
   "indexPath": "plugins/memory-vector/vector"
 }
 ```
@@ -253,7 +257,7 @@ If the user only has one exact memory folder, use `memoryPaths`:
 {
   "workspaceRoot": "<WORKSPACE_ROOT>",
   "memoryPaths": [
-    "<WORKSPACE_ROOT>/company/engineering-head/memory"
+    "<WORKSPACE_ROOT>/agents/<AGENT_OR_WORKSPACE>/memory"
   ],
   "indexPath": "plugins/memory-vector/vector"
 }

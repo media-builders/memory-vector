@@ -23,12 +23,12 @@ function errorResult(message) {
 export default definePluginEntry({
   id: "memory-vector",
   name: "Memory Vector",
-  description: "Semantic search over company memory using LanceDB vector embeddings.",
+  description: "Semantic search over configured memory files using LanceDB vector embeddings.",
 
   register(api) {
     api.registerTool({
       name: "memory_vector_search",
-      description: "Search company vector memory with a natural language query.",
+      description: "Search indexed memory with a natural language query.",
       parameters: {
         type: "object",
         properties: {
@@ -86,7 +86,7 @@ export default definePluginEntry({
 
     api.registerTool({
       name: "memory_vector_ingest",
-      description: "Refresh the company vector memory index from agent workspaces.",
+      description: "Refresh the vector memory index from configured files, folders, and repositories.",
       parameters: {
         type: "object",
         properties: {

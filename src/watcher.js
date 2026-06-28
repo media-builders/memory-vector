@@ -13,7 +13,7 @@ let pendingPaths = new Set();
 
 /**
  * Check if a changed file is relevant for memory indexing.
- * Relevant: agent MEMORY.md, memory/*.md, .git repo changes inside the configured memory root.
+ * Relevant: MEMORY.md, memory/*.md, and .git repo changes inside the configured memory paths.
  */
 function resolveRootPath(workspaceRoot, rootPath) {
   return path.isAbsolute(rootPath) ? rootPath : path.join(workspaceRoot, rootPath);
@@ -40,7 +40,7 @@ function isRelevantConfiguredPath(filePath, targets) {
   });
 }
 
-function isRelevantPath(filePath, config, memoryRootPath, ignoreAgents = ["brain", "headquarters", "knowledge"]) {
+function isRelevantPath(filePath, config, memoryRootPath, ignoredRootNames = ["node_modules", "__pycache__", ".venv", ".git"]) {
   const targets = configuredMemoryPaths(config);
   if (targets.length > 0) {
     return isRelevantConfiguredPath(filePath, targets);
@@ -52,10 +52,10 @@ function isRelevantPath(filePath, config, memoryRootPath, ignoreAgents = ["brain
   if (!rel || rel.startsWith("..")) return false;
 
   const parts = rel.split(path.sep);
-  const agentDir = parts[0];
+  const rootDir = parts[0];
 
-  // Skip ignored agents
-  if (ignoreAgents.includes(agentDir)) return false;
+  // Skip dependency/cache folders when scanning a broad root.
+  if (ignoredRootNames.includes(rootDir)) return false;
 
   // Skip venvs, node_modules, __pycache__
   if (parts.some((p) => [".venv", "node_modules", "__pycache__", ".git"].includes(p) && p !== ".git")) {
@@ -65,8 +65,8 @@ function isRelevantPath(filePath, config, memoryRootPath, ignoreAgents = ["brain
 
   const fileName = path.basename(filePath);
 
-  // MEMORY.md in agent root
-  if (fileName === "MEMORY.md" && path.dirname(filePath) === path.join(memoryRootPath, agentDir)) {
+  // MEMORY.md in a direct child folder of the configured root.
+  if (fileName === "MEMORY.md" && path.dirname(filePath) === path.join(memoryRootPath, rootDir)) {
     return true;
   }
 
@@ -76,7 +76,7 @@ function isRelevantPath(filePath, config, memoryRootPath, ignoreAgents = ["brain
   }
 
   // .git changes (but not internals)
-  if (fileName === ".git" && path.basename(path.dirname(filePath)) === agentDir) {
+  if (fileName === ".git" && path.basename(path.dirname(filePath)) === rootDir) {
     return true;
   }
 

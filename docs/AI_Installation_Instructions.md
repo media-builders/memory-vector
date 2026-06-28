@@ -28,15 +28,15 @@ Install and configure the `memory-vector` plugin so OpenClaw can:
 The plugin supports these path settings:
 
 - `workspaceRoot`: absolute path to the user's OpenClaw workspace
-- `memoryRoot`: broad folder containing agent folders, usually `company`
+- `memoryRoot`: broad folder containing memory workspaces, relative to `workspaceRoot` or absolute
 - `memoryPaths`: exact files or folders to ingest; use this when the user does not have a broad memory root
 - `indexPath`: where generated vector files and LanceDB data are written
 - `plugins.load.paths[]`: absolute path to the installed plugin directory
 
-Prefer `memoryPaths` for public installs because users may only have a folder such as:
+Prefer `memoryPaths` for public installs because users may only have a specific folder such as:
 
 ```text
-<WORKSPACE_ROOT>/company/engineering-head/memory
+<WORKSPACE_ROOT>/agents/<AGENT_OR_WORKSPACE>/memory
 ```
 
 ## Phase 1 - Identify The Environment
@@ -118,9 +118,9 @@ find "$WORKSPACE_ROOT" -maxdepth 4 -type f -name AGENTS.md -print
 
 Use the crawl results to build a candidate list:
 
-- exact memory folders, e.g. `$WORKSPACE_ROOT/company/engineering-head/memory`
-- durable memory files, e.g. `$WORKSPACE_ROOT/company/engineering-head/MEMORY.md`
-- broad roots only when appropriate, e.g. `$WORKSPACE_ROOT/company`
+- exact memory folders, e.g. `$WORKSPACE_ROOT/agents/<AGENT_OR_WORKSPACE>/memory`
+- durable memory files, e.g. `$WORKSPACE_ROOT/agents/<AGENT_OR_WORKSPACE>/MEMORY.md`
+- broad roots only when appropriate, e.g. `$WORKSPACE_ROOT/agents`
 
 ## Phase 3 - Confirm Paths With The User
 
@@ -144,8 +144,8 @@ If no paths were found, ask:
 
 ```text
 I could not find memory folders automatically. Please send the exact file or folder paths you want indexed, for example:
-<WORKSPACE_ROOT>/company/engineering-head/memory
-<WORKSPACE_ROOT>/company/engineering-head/MEMORY.md
+<WORKSPACE_ROOT>/agents/<AGENT_OR_WORKSPACE>/memory
+<WORKSPACE_ROOT>/agents/<AGENT_OR_WORKSPACE>/MEMORY.md
 ```
 
 Only continue after the user confirms or supplies override paths.
@@ -195,7 +195,7 @@ Recommended config shape:
         "enabled": true,
         "config": {
           "workspaceRoot": "<WORKSPACE_ROOT_ABSOLUTE_PATH>",
-          "memoryRoot": "company",
+          "memoryRoot": ".",
           "memoryPaths": [
             "<CONFIRMED_MEMORY_PATH_1>",
             "<CONFIRMED_MEMORY_PATH_2>"
@@ -277,7 +277,7 @@ cd "$PLUGIN_DIR"
 python3 scripts/ingest_memory.py \
   "$WORKSPACE_ROOT" \
   "plugins/memory-vector/vector" \
-  "company" \
+  "." \
   '["<CONFIRMED_MEMORY_PATH_1>","<CONFIRMED_MEMORY_PATH_2>"]'
 
 scripts/.venv/bin/python scripts/update_vector_memory.py \

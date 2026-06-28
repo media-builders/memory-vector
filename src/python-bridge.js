@@ -111,7 +111,7 @@ export function resolveConfig(pluginConfig = {}) {
   const home = process.env.HOME || process.env.USERPROFILE || "/root";
   return {
     workspaceRoot: pluginConfig.workspaceRoot || path.join(home, ".openclaw/workspace"),
-    memoryRoot: pluginConfig.memoryRoot || "company",
+    memoryRoot: pluginConfig.memoryRoot || ".",
     memoryPaths: normalizeMemoryPaths(pluginConfig.memoryPaths),
     indexPath: pluginConfig.indexPath || "plugins/memory-vector/vector",
     embeddingModel: pluginConfig.embeddingModel || "all-MiniLM-L6-v2",

@@ -3,7 +3,7 @@ set -euo pipefail
 
 WS="${1:-$HOME/.openclaw/workspace}"
 INDEX_PATH="${2:-plugins/memory-vector/vector}"
-MEMORY_ROOT="${3:-company}"
+MEMORY_ROOT="${3:-.}"
 MEMORY_PATHS="${4:-[]}"
 PLUGIN="$WS/plugins/memory-vector"
 
