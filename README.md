@@ -26,6 +26,8 @@ The portable install path is `memoryPaths`: exact memory files or folders chosen
 
 When a folder is listed in `memoryPaths`, markdown files under that folder are ingested. When a single `.md` file is listed, only that file is ingested.
 
+Git commit history is collected from every git repository discovered under `workspaceRoot`, regardless of which `memoryPaths` are configured.
+
 ## Documentation
 
 - [Installation guide](docs/INSTALLATION.md)

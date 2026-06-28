@@ -42,11 +42,11 @@ Within that root, the plugin ingests:
 
 - `<MEMORY_ROOT>/<AGENT_OR_WORKSPACE>/MEMORY.md`
 - `<MEMORY_ROOT>/<AGENT_OR_WORKSPACE>/memory/*.md`
-- Git commit history from repositories found under `<MEMORY_ROOT>`
+- Git commit history from repositories found under `<WORKSPACE_ROOT>`
 
 A workspace folder is considered ingestible when it is a directory under `<MEMORY_ROOT>` and contains `AGENTS.md`.
 
-If a user does not have a broader memory root, set `memoryPaths` instead. When `memoryPaths` is set, the plugin ingests those exact files or folders instead of scanning `memoryRoot`.
+If a user does not have a broader memory root, set `memoryPaths` instead. When `memoryPaths` is set, the plugin ingests those exact files or folders instead of scanning `memoryRoot` for markdown memory. Git discovery still scans repositories under `workspaceRoot`.
 
 Examples:
 
@@ -178,7 +178,7 @@ If your existing `plugins.load.paths` already contains other local plugin paths,
 
 | Field | Required | Recommended value | Purpose |
 |---|---:|---|---|
-| `workspaceRoot` | Yes | `<WORKSPACE_ROOT>` | Root path used to resolve relative plugin paths. |
+| `workspaceRoot` | Yes | `<WORKSPACE_ROOT>` | Root path used to resolve relative plugin paths and scan workspace git repositories. |
 | `memoryRoot` | No | `.` | Broad folder containing memory workspaces. Relative values resolve under `workspaceRoot`; absolute values are allowed. Prefer `memoryPaths` for exact public installs. |
 | `memoryPaths` | No | `[]` | Exact memory files or folders to ingest. When set, this takes precedence over `memoryRoot`. |
 | `indexPath` | Yes | `plugins/memory-vector/vector` | Vector index path relative to `workspaceRoot`. |

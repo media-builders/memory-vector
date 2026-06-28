@@ -33,6 +33,8 @@ The plugin supports these path settings:
 - `indexPath`: where generated vector files and LanceDB data are written
 - `plugins.load.paths[]`: absolute path to the installed plugin directory
 
+Git commit history is collected from repositories discovered under `workspaceRoot`. `memoryPaths` controls markdown memory ingestion only; it should not be used to narrow git discovery.
+
 Prefer `memoryPaths` for public installs because users may only have a specific folder such as:
 
 ```text
@@ -228,6 +230,7 @@ Important merge behavior:
 - If `plugins.allow` does not exist, do not create a restrictive allowlist unless needed by the user's config style.
 - If `plugins.load.paths` exists, append the absolute plugin directory if missing.
 - If the confirmed paths are exact folders or files, put them in `memoryPaths`.
+- Make sure `workspaceRoot` is the workspace whose git repositories should be included in date summaries.
 - Use forward slashes in JSON paths on Windows, or escape backslashes.
 
 Validate:

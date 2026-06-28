@@ -38,7 +38,7 @@ When answering recall questions, treat the retrieved result paths and metadata a
 
 - Daily memory may come from files named `memory/YYYY-MM-DD.md`, but the exact parent path depends on the user's configured `memoryPaths` or `memoryRoot`.
 - Durable memory may come from files named `MEMORY.md`, but the exact parent path depends on the user's configuration.
-- Git history is indexed from git repositories discovered under the configured ingest paths.
+- Git history is indexed from git repositories discovered under `workspaceRoot`, independent of exact `memoryPaths`.
 - Use the plugin tools first, then summarize with the LLM.
 - Do not invent activity that is not present in retrieved results.
 - Distinguish memory notes from commit evidence when it matters.
@@ -131,7 +131,7 @@ Refresh first:
 memory_vector_ingest
 ```
 
-This updates the LanceDB index by scanning the configured memory files, folders, and git repositories.
+This updates the LanceDB index by scanning the configured memory files/folders and git repositories under `workspaceRoot`.
 
 ## Output Guidance
 
@@ -180,4 +180,4 @@ If the user asked for a lightweight topic recall instead of a full daily report,
 
 This skill retrieves and summarizes indexed memory plus indexed git commit history.
 
-If work happened outside the configured memory paths and outside git repositories discovered by ingest, recall quality will be limited by that missing input. In that case, explain the likely path/config gap and suggest updating `memoryPaths` or `memoryRoot`.
+If memory notes happened outside the configured memory paths, or code work happened outside git repositories under `workspaceRoot`, recall quality will be limited by that missing input. In that case, explain the likely path/config gap and suggest updating `memoryPaths`, `memoryRoot`, or `workspaceRoot`.

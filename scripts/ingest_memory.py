@@ -50,6 +50,7 @@ MANIFEST = OUT_DIR / 'manifest.json'
 INDEX = OUT_DIR / 'index.json'
 
 HEADING_RE = re.compile(r'^(#{1,6})\s+(.*)$')
+IGNORED_SCAN_DIRS = frozenset({'.venv', 'node_modules', '__pycache__', '.git'})
 DISCOVERED_AGENT_DIRS = frozenset(
     d.name for d in (BASE.iterdir() if BASE.exists() else [])
     if d.is_dir() and (d / 'AGENTS.md').exists()
@@ -161,7 +162,19 @@ def file_type_for(path: Path):
     return 'memory'
 
 
+def is_under(path: Path, root: Path):
+    try:
+        path.resolve().relative_to(root.resolve())
+        return True
+    except ValueError:
+        return False
+
+
 def relative_repo_path(repo: Path):
+    try:
+        return str(repo.relative_to(WORKSPACE_ROOT))
+    except ValueError:
+        pass
     try:
         return str(repo.relative_to(BASE))
     except ValueError:
@@ -170,17 +183,31 @@ def relative_repo_path(repo: Path):
 
 def discover_git_repos():
     repos = []
-    roots = MEMORY_PATHS if MEMORY_PATHS else [BASE]
-    for root in roots:
-        if not root.exists() or root.is_file():
+    seen = set()
+    if not WORKSPACE_ROOT.exists() or WORKSPACE_ROOT.is_file():
+        return repos
+
+    for current, dirnames, filenames in os.walk(WORKSPACE_ROOT):
+        current_path = Path(current)
+        if is_under(current_path, OUT_DIR):
+            dirnames[:] = []
             continue
-        for git_dir in sorted(root.rglob('.git')):
-            repo = git_dir.parent
-            if OUT_DIR in repo.parents:
-                continue
-            if any(part in {'.venv', 'node_modules', '.git'} for part in repo.parts):
-                continue
-            repos.append(repo)
+
+        has_git = '.git' in dirnames or '.git' in filenames
+        dirnames[:] = sorted(
+            d for d in dirnames
+            if d not in IGNORED_SCAN_DIRS and not is_under(current_path / d, OUT_DIR)
+        )
+
+        if not has_git:
+            continue
+
+        repo = current_path
+        resolved = repo.resolve()
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        repos.append(repo)
     return repos
 
 
@@ -261,6 +288,12 @@ def repo_agent_id(repo: Path) -> str:
     inferred = infer_agent_id(repo)
     if inferred != 'workspace':
         return inferred
+
+    try:
+        rel = repo.relative_to(WORKSPACE_ROOT)
+        return rel.parts[0] if rel.parts else 'workspace'
+    except ValueError:
+        pass
 
     try:
         rel = repo.relative_to(BASE)
@@ -450,7 +483,9 @@ def main():
 
     MANIFEST.write_text(json.dumps({
         'generated_at': datetime.now(UTC).isoformat().replace('+00:00', 'Z'),
-        'workspace_root': str(BASE),
+        'workspace_root': str(WORKSPACE_ROOT),
+        'memory_root': str(BASE),
+        'git_root': str(WORKSPACE_ROOT),
         'source_file_count': len(files),
         'git_repo_count': len(git_index),
         'git_commit_chunk_count': len(git_records),
